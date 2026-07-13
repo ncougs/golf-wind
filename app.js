@@ -281,33 +281,45 @@ function openModal(type) {
     const direction = effectPct > 0 ? 'headwind' : effectPct < 0 ? 'tailwind' : 'neutral';
     const hw        = Math.abs(Math.round(effectHeadwind));
     const color     = effectPct > 0 ? '#f87171' : effectPct < 0 ? '#34d399' : '#888';
+    const clubs     = Math.round(Math.abs(150 * effectPct / 100) / 15);
+    const clubLabel = clubs === 0
+      ? 'no change'
+      : `${effectPct > 0 ? '+' : '-'}${clubs} ${clubs === 1 ? 'club' : 'clubs'}`;
     const initDist  = shotDistance;
 
-    const formatPlaysAs = (dist) => {
-      const pa = Math.round(dist * (1 + effectPct / 100));
-      return effectPct === 0
-        ? `${dist}m — no adjustment`
-        : `${dist}m shot playing ${pa}m`;
-    };
+    const playsAs = (dist) => Math.round(dist * (1 + effectPct / 100));
 
-    modalTitle.textContent = 'Distance Adjustment';
+    modalTitle.textContent = 'Distance';
     modalBody.innerHTML = `
-      <div class="plays-as-display" id="plays-as-display" style="color:${color}">
-        ${formatPlaysAs(initDist)}
+      <div class="modal-stats">
+        <div class="modal-stat">
+          <div class="modal-stat-value" style="color:${color}">${hw} km/h</div>
+          <div class="modal-stat-label">${direction}</div>
+        </div>
+        <div class="modal-stat-divider"></div>
+        <div class="modal-stat">
+          <div class="modal-stat-value" style="color:${color}">${clubLabel}</div>
+          <div class="modal-stat-label">adjustment</div>
+        </div>
       </div>
-      <div class="dist-slider-wrap">
-        <input type="range" id="modal-dist-slider" min="50" max="300" step="5" value="${initDist}">
-        <div class="dist-slider-labels"><span>50m</span><span>300m</span></div>
+
+      <div class="modal-calc">
+        <div class="modal-calc-display">
+          <span class="modal-calc-from" id="modal-calc-from">${initDist}m</span>
+          <span class="modal-calc-arrow">→</span>
+          <span class="modal-calc-to" id="modal-calc-to" style="color:${color}">${playsAs(initDist)}m</span>
+        </div>
+        <div class="dist-slider-wrap">
+          <input type="range" id="modal-dist-slider" min="50" max="300" step="5" value="${initDist}">
+          <div class="dist-slider-labels"><span>50m</span><span>300m</span></div>
+        </div>
       </div>
-      <p class="explanation">
-        ${useGusts ? 'Gusts' : 'Wind'} of <strong>${effectActiveKmh} km/h</strong> with <strong>${hw} km/h</strong> as the ${direction} component.
-        16 km/h of headwind = +10% carry. Tailwind helps less: 16 km/h ≈ −7%.
-      </p>
     `;
 
     document.getElementById('modal-dist-slider').addEventListener('input', e => {
       const d = parseInt(e.target.value);
-      document.getElementById('plays-as-display').textContent = formatPlaysAs(d);
+      document.getElementById('modal-calc-from').textContent = `${d}m`;
+      document.getElementById('modal-calc-to').textContent   = `${playsAs(d)}m`;
     });
   }
 
