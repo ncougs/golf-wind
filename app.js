@@ -17,10 +17,10 @@ const windSpeedEl = document.getElementById('wind-speed');
 const windDirEl   = document.getElementById('wind-dir');
 const statusEl    = document.getElementById('status');
 const updatedEl   = document.getElementById('updated');
-const effectClub  = document.getElementById('effect-club');
-const effectCross = document.getElementById('effect-cross');
-const clubLabelEl = document.getElementById('club-label');
-const distanceVal = document.getElementById('distance-val');
+const effectDist    = document.getElementById('effect-dist');
+const effectDistDir = document.getElementById('effect-dist-dir');
+const effectCross   = document.getElementById('effect-cross');
+const distanceVal   = document.getElementById('distance-val');
 const modalOverlay = document.getElementById('modal-overlay');
 const modalTitle   = document.getElementById('modal-title');
 const modalBody    = document.getElementById('modal-body');
@@ -31,18 +31,16 @@ let windGoingDeg = null;
 // Toggle: true = use gusts for effect calculation, false = use avg wind speed
 let useGusts = localStorage.getItem('useGusts') !== 'false';
 
-// Shot distance in meters — drives both drift scaling and club vs carry display
+// Shot distance in meters — used for crosswind drift scaling only
 let shotDistance = parseInt(localStorage.getItem('shotDistance') || '150');
-const WEDGE_THRESHOLD = 120; // below this show carry distance, above show clubs
-const METERS_PER_CLUB = 13; // approximate iron gap
 
 // Last computed effect values — used to populate modal
 let effectHeadwind = null;
 let effectCrosswind = null;
-let effectClubs = null;
+let effectPct = null;
 let effectDriftM = null;
 let effectDriftDir = null;
-let effectGustKmh = null;
+let effectActiveKmh = null;
 
 // ── Entry point ────────────────────────────────────────────────────────
 document.getElementById('start-btn').addEventListener('click', start);
@@ -186,119 +184,78 @@ function updateEffect() {
 
   const angleDiffRad = (windGoingDeg - deviceHeading) * Math.PI / 180;
 
-  const active = useGusts ? windGustKmh : windSpeedKmh;
-  // Positive = headwind, negative = tailwind
+  const active    = useGusts ? windGustKmh : windSpeedKmh;
   const headwind  = -active * Math.cos(angleDiffRad);
-  // Positive = wind pushing ball right, negative = pushing left
   const crosswind =  active * Math.sin(angleDiffRad);
 
-  // Club adjustment: 1 club per 16 km/h headwind, 1 club per 24 km/h tailwind
-  const clubs = headwind >= 0
-    ? Math.round(headwind / 16)
-    : Math.round(headwind / 24);
+  // Distance: percentage rule — 10% per 16 km/h headwind, 7% per 16 km/h tailwind
+  const pct = headwind >= 0
+    ? Math.round(headwind / 160 * 100)
+    : Math.round(headwind / 230 * 100);
 
-  // Scale drift by actual shot distance (calibrated at 150m)
+  // Crosswind drift scaled by actual shot distance (calibrated at 150m)
   const driftM   = Math.round(Math.abs(crosswind) * 5 / 16 * (shotDistance / 150));
   const driftDir = crosswind > 0 ? 'left' : 'right';
 
-  // Skip DOM update if discrete outputs haven't changed
-  if (clubs === effectClubs && driftM === effectDriftM && driftDir === effectDriftDir) return;
+  if (pct === effectPct && driftM === effectDriftM && driftDir === effectDriftDir) return;
 
   effectHeadwind  = headwind;
   effectCrosswind = crosswind;
-  effectClubs     = clubs;
+  effectPct       = pct;
   effectDriftM    = driftM;
   effectDriftDir  = driftDir;
-  effectGustKmh   = active;
+  effectActiveKmh = active;
 
-  // Club card — wedge mode: show carry distance target; iron mode: show club change
-  const isWedge = shotDistance <= WEDGE_THRESHOLD;
-  if (isWedge) {
-    clubLabelEl.textContent = 'Carry';
-    const carryAdj = Math.round(clubs * METERS_PER_CLUB);
-    if (carryAdj === 0) {
-      effectClub.textContent = 'On distance';
-      effectClub.style.color = '#888';
-    } else {
-      effectClub.textContent = `Play as ${shotDistance + carryAdj}m`;
-      effectClub.style.color = clubColor(clubs);
-    }
+  // Distance card
+  if (pct === 0) {
+    effectDist.textContent    = 'No adjustment';
+    effectDist.style.color    = '#888';
+    effectDistDir.textContent = '';
   } else {
-    clubLabelEl.textContent = 'Club';
-    if (clubs === 0) {
-      effectClub.textContent = 'No adjustment';
-      effectClub.style.color = '#888';
-    } else {
-      effectClub.textContent = formatClubs(clubs);
-      effectClub.style.color = clubColor(clubs);
-    }
+    effectDist.textContent    = `${pct > 0 ? '+' : ''}${pct}%`;
+    effectDist.style.color    = pct > 0 ? '#f87171' : '#34d399';
+    effectDistDir.textContent = pct > 0 ? 'headwind' : 'tailwind';
   }
 
-  // Crosswind line
+  // Crosswind card
   effectCross.textContent = driftM < 1 ? 'Straight' : `Aim ${driftM}m ${driftDir}`;
 }
 
 // ── Modal ───────────────────────────────────────────────────────────────
 function openModal(type) {
-  if (effectClubs === null) return;
+  if (effectPct === null) return;
 
-  if (type === 'club') {
-    const direction = effectClubs > 0 ? 'headwind' : effectClubs < 0 ? 'tailwind' : 'neutral';
+  if (type === 'distance') {
+    const direction = effectPct > 0 ? 'headwind' : effectPct < 0 ? 'tailwind' : 'neutral';
     const hw        = Math.abs(Math.round(effectHeadwind));
-    const color     = clubColor(effectClubs);
-    const isWedge   = shotDistance <= WEDGE_THRESHOLD;
-    const carryAdj  = Math.round(effectClubs * METERS_PER_CLUB);
-    const summary   = isWedge
-      ? (carryAdj === 0 ? 'On distance' : `Play as ${shotDistance + carryAdj}m`)
-      : (effectClubs === 0 ? 'No adjustment needed' : `${formatClubs(effectClubs)} — ${direction}`);
-    modalTitle.textContent = isWedge ? 'Carry Adjustment' : 'Club Adjustment';
-    modalBody.innerHTML = isWedge ? `
+    const color     = effectPct > 0 ? '#f87171' : effectPct < 0 ? '#34d399' : '#888';
+    const summary   = effectPct === 0
+      ? 'No adjustment needed'
+      : `${effectPct > 0 ? '+' : ''}${effectPct}% — ${direction}`;
+    modalTitle.textContent = 'Distance Adjustment';
+    modalBody.innerHTML = `
       <div class="summary" style="color:${color}">${summary}</div>
       <p class="explanation">
-        ${useGusts ? 'Gusts' : 'Wind'} of <strong>${effectGustKmh} km/h</strong> with <strong>${hw} km/h</strong> as the ${direction} component on a <strong>${shotDistance}m</strong> shot.
-        At wedge distances you don't change club — you adjust carry. Every 16 km/h of headwind
-        adds ~${METERS_PER_CLUB}m to the distance you need to cover.
+        ${useGusts ? 'Gusts' : 'Wind'} of <strong>${effectActiveKmh} km/h</strong> with <strong>${hw} km/h</strong> as the ${direction} component.
+        Add or subtract this percentage from your carry distance — it works for every club.
+        16 km/h of headwind = +10%. Tailwind helps less: 16 km/h = roughly −7%.
       </p>
-      <h3>How to use this</h3>
+      <h3>How to apply it</h3>
       <div class="club-row">
-        <span class="club-name">Pick your wedge</span>
-        <span class="club-note">Choose the club you'd normally use for the target distance.</span>
+        <span class="club-name">Wedge 90m</span>
+        <span class="club-note">${effectPct > 0 ? `+${effectPct}% → play as ${Math.round(90 * (1 + effectPct / 100))}m` : effectPct < 0 ? `${effectPct}% → play as ${Math.round(90 * (1 + effectPct / 100))}m` : 'No change — 90m'}</span>
       </div>
       <div class="club-row">
-        <span class="club-name">Hit for the number</span>
-        <span class="club-note">Swing to carry ${shotDistance + carryAdj}m instead of ${shotDistance}m. Full swing, partial, or punch as needed.</span>
+        <span class="club-name">Iron 150m</span>
+        <span class="club-note">${effectPct > 0 ? `+${effectPct}% → play as ${Math.round(150 * (1 + effectPct / 100))}m` : effectPct < 0 ? `${effectPct}% → play as ${Math.round(150 * (1 + effectPct / 100))}m` : 'No change — 150m'}</span>
       </div>
       <div class="club-row">
-        <span class="club-name">Tailwind</span>
-        <span class="club-note">Tailwind helps less than headwind hurts. Take less club or grip down slightly.</span>
-      </div>
-    ` : `
-      <div class="summary" style="color:${color}">${summary}</div>
-      <p class="explanation">
-        ${useGusts ? 'Gusts' : 'Wind'} of <strong>${effectGustKmh} km/h</strong> with <strong>${hw} km/h</strong> as the ${direction} component on a <strong>${shotDistance}m</strong> shot.
-        The standard caddie rule: every 16 km/h of headwind = 1 extra club. Tailwind helps less —
-        you only drop a club every 24 km/h downwind.
-      </p>
-      <h3>By club type</h3>
-      <div class="club-row">
-        <span class="club-name">Wedges</span>
-        <span class="club-note">Drag shot distance below ${WEDGE_THRESHOLD}m for a carry target instead.</span>
+        <span class="club-name">Long iron 200m</span>
+        <span class="club-note">${effectPct > 0 ? `+${effectPct}% → play as ${Math.round(200 * (1 + effectPct / 100))}m` : effectPct < 0 ? `${effectPct}% → play as ${Math.round(200 * (1 + effectPct / 100))}m` : 'No change — 200m'}</span>
       </div>
       <div class="club-row">
-        <span class="club-name">Short irons (8–9)</span>
-        <span class="club-note">Standard rule applies closely. Rely on the estimate.</span>
-      </div>
-      <div class="club-row">
-        <span class="club-name">Mid irons (5–7)</span>
-        <span class="club-note">Standard rule. This is what the adjustment is calibrated for.</span>
-      </div>
-      <div class="club-row">
-        <span class="club-name">Long irons / Hybrids</span>
-        <span class="club-note">Slightly less affected — lower trajectory. Adjust conservatively.</span>
-      </div>
-      <div class="club-row">
-        <span class="club-name">Driver</span>
-        <span class="club-note">Can't add a club. Into wind: tee lower and flight it down. Downwind: tee higher and swing easy.</span>
+        <span class="club-name">Driver 250m</span>
+        <span class="club-note">${effectPct > 0 ? `+${effectPct}% → play as ${Math.round(250 * (1 + effectPct / 100))}m` : effectPct < 0 ? `${effectPct}% → play as ${Math.round(250 * (1 + effectPct / 100))}m` : 'No change — 250m'}</span>
       </div>
     `;
   } else if (type === 'crosswind') {
@@ -309,7 +266,7 @@ function openModal(type) {
     modalBody.innerHTML = `
       <div class="summary" style="color:#fff">${summary}</div>
       <p class="explanation">
-        ${useGusts ? 'Gusts' : 'Wind'} of <strong>${effectGustKmh} km/h</strong> with <strong>${cw} km/h</strong> across your shot line.
+        ${useGusts ? 'Gusts' : 'Wind'} of <strong>${effectActiveKmh} km/h</strong> with <strong>${cw} km/h</strong> across your shot line.
         Estimate: ~5m of drift per 16 km/h on a 150m approach. Scale up for longer shots, down for shorter.
         The ball is pushed <strong>${pushDir}</strong> — so aim ${effectDriftDir}.
       </p>
@@ -403,12 +360,6 @@ function updateToggleUI() {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
-function formatClubs(n) {
-  const sign  = n > 0 ? '+' : '';
-  const label = Math.abs(n) === 1 ? 'club' : 'clubs';
-  return `${sign}${n} ${label}`;
-}
-
 function clubColor(n) {
   return n > 0 ? '#f87171' : n < 0 ? '#34d399' : '#888';
 }

@@ -41,15 +41,6 @@
       <div id="wind-dir">locating...</div>
     </div>
 
-    <div id="distance-row">
-      <span class="distance-label">Shot</span>
-      <div id="distance-drag">
-        <span class="drag-arrow">&#8592;</span>
-        <span id="distance-val">150m</span>
-        <span class="drag-arrow">&#8594;</span>
-      </div>
-    </div>
-
     <div id="wind-toggle">
       <button class="toggle-opt" data-val="wind">Wind</button>
       <button class="toggle-opt" data-val="gusts">Gusts</button>
@@ -62,13 +53,19 @@
     </div>
 
     <div id="effect-cards">
-      <div class="card" data-modal="club">
-        <div class="card-label" id="club-label">Club</div>
-        <div class="card-value" id="effect-club">--</div>
+      <div class="card" data-modal="distance">
+        <div class="card-label">Distance</div>
+        <div class="card-value" id="effect-dist">--</div>
+        <div class="card-sub" id="effect-dist-dir"></div>
       </div>
       <div class="card" data-modal="crosswind">
         <div class="card-label">Crosswind</div>
         <div class="card-value" id="effect-cross">--</div>
+        <div id="distance-drag">
+          <span class="drag-arrow">&#8592;</span>
+          <span id="distance-val">150m</span>
+          <span class="drag-arrow">&#8594;</span>
+        </div>
       </div>
     </div>
 

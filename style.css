@@ -142,49 +142,31 @@ header {
   margin-top: 0.5rem;
 }
 
-/* ── Distance drag ── */
-#distance-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding-bottom: 0.75rem;
-}
-
-.distance-label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-}
-
+/* ── In-card distance drag (crosswind card) ── */
 #distance-drag {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 0.35rem 0.85rem;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
   cursor: ew-resize;
   touch-action: pan-y;
-  transition: border-color 0.15s;
 }
 
-#distance-drag:active { border-color: rgba(255,255,255,0.18); }
-
 .drag-arrow {
-  font-size: 0.7rem;
-  color: #333;
+  font-size: 0.6rem;
+  color: #2a2a2a;
 }
 
 #distance-val {
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #444;
   font-variant-numeric: tabular-nums;
-  min-width: 4ch;
+  min-width: 3.5ch;
   text-align: center;
-  color: #fff;
 }
 
 #wind-toggle {
@@ -275,6 +257,13 @@ header {
   font-weight: 700;
   color: #fff;
   line-height: 1.2;
+}
+
+.card-sub {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+  text-transform: capitalize;
 }
 
 /* ── Footer ── */
