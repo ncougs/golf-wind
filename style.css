@@ -159,9 +159,6 @@ header {
 
 /* ── Effect cards ── */
 #effect-cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
   width: 100%;
   padding-bottom: 1.25rem;
 }
@@ -188,6 +185,13 @@ header {
   font-weight: 700;
   color: #fff;
   line-height: 1.2;
+}
+
+.card-plays-as {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #aaa;
+  margin-top: 0.35rem;
 }
 
 .card-sub {

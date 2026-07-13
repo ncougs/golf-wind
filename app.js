@@ -16,8 +16,8 @@ const windDirEl   = document.getElementById('wind-dir');
 const statusEl    = document.getElementById('status');
 const updatedEl   = document.getElementById('updated');
 const effectDist    = document.getElementById('effect-dist');
+const effectPlaysAs = document.getElementById('effect-plays-as');
 const effectDistDir = document.getElementById('effect-dist-dir');
-const effectCross   = document.getElementById('effect-cross');
 const modalOverlay = document.getElementById('modal-overlay');
 const modalTitle   = document.getElementById('modal-title');
 const modalBody    = document.getElementById('modal-body');
@@ -202,20 +202,20 @@ function updateEffect() {
   effectActiveKmh = active;
 
   // Distance card
-  const clubs = Math.round(Math.abs(150 * pct / 100) / 15);
+  const clubs     = Math.round(Math.abs(150 * pct / 100) / 15);
+  const playsAs150 = Math.round(150 * (1 + pct / 100));
   if (pct === 0 || clubs === 0) {
     effectDist.textContent    = 'no change';
     effectDist.style.color    = '#888';
+    effectPlaysAs.textContent = '';
     effectDistDir.textContent = '';
   } else {
     const label = clubs === 1 ? 'club' : 'clubs';
     effectDist.textContent    = `${pct > 0 ? '+' : '-'}${clubs} ${label}`;
     effectDist.style.color    = pct > 0 ? '#f87171' : '#34d399';
+    effectPlaysAs.textContent = `150m plays as ${playsAs150}m`;
     effectDistDir.textContent = pct > 0 ? 'into wind' : 'downwind';
   }
-
-  // Crosswind card
-  effectCross.textContent = driftM < 1 ? 'Straight' : `Aim ${driftM}m ${driftDir}`;
 }
 
 // ── Modal ───────────────────────────────────────────────────────────────
@@ -254,40 +254,6 @@ function openModal(type) {
       const d = parseInt(e.target.value);
       document.getElementById('plays-as-display').textContent = formatPlaysAs(d);
     });
-  } else if (type === 'crosswind') {
-    const cw      = Math.abs(Math.round(effectCrosswind));
-    const pushDir = effectCrosswind > 0 ? 'right' : 'left';
-    const summary = effectDriftM < 1 ? 'No significant crosswind' : `Aim ${effectDriftM}m ${effectDriftDir}`;
-    modalTitle.textContent = 'Crosswind Aim';
-    modalBody.innerHTML = `
-      <div class="summary" style="color:#fff">${summary}</div>
-      <p class="explanation">
-        ${useGusts ? 'Gusts' : 'Wind'} of <strong>${effectActiveKmh} km/h</strong> with <strong>${cw} km/h</strong> across your shot line.
-        Estimate: ~5m of drift per 16 km/h on a 150m approach. Scale up for longer shots, down for shorter.
-        The ball is pushed <strong>${pushDir}</strong> — so aim ${effectDriftDir}.
-      </p>
-      <h3>By club type</h3>
-      <div class="club-row">
-        <span class="club-name">Wedges</span>
-        <span class="club-note">High ball flight = more drift. Add ~50% to the estimate. Aim wider than shown.</span>
-      </div>
-      <div class="club-row">
-        <span class="club-name">Short irons (8–9)</span>
-        <span class="club-note">Close to the estimate. Reliable guide.</span>
-      </div>
-      <div class="club-row">
-        <span class="club-name">Mid irons (5–7)</span>
-        <span class="club-note">Standard estimate. This is what the calculation is based on.</span>
-      </div>
-      <div class="club-row">
-        <span class="club-name">Long irons / Hybrids</span>
-        <span class="club-note">Slightly less drift — faster ball and lower trajectory. Reduce estimate slightly.</span>
-      </div>
-      <div class="club-row">
-        <span class="club-name">Driver</span>
-        <span class="club-note">Low trajectory and high speed — much less lateral drift. The estimate will overstate it.</span>
-      </div>
-    `;
   }
 
   modalOverlay.classList.add('open');
