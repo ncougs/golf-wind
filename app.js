@@ -1,6 +1,6 @@
 // ── State ──────────────────────────────────────────────────────────────
 let windFromDeg = null;   // degrees wind is coming FROM (met convention)
-let windSpeedMph = null;
+let windSpeedKmh = null;
 let deviceHeading = null; // compass degrees device is pointing
 let lastFetch = null;
 
@@ -74,7 +74,7 @@ async function fetchWind(lat, lng) {
     const data = await res.json();
 
     windFromDeg   = data.current.wind_direction_10m;
-    windSpeedMph  = Math.round(data.current.wind_speed_10m);
+    windSpeedKmh  = Math.round(data.current.wind_speed_10m);
     lastFetch     = new Date();
 
     updateWindDisplay();
@@ -87,8 +87,8 @@ async function fetchWind(lat, lng) {
 }
 
 function updateWindDisplay() {
-  if (windSpeedMph === null) return;
-  windSpeedEl.textContent = `${windSpeedMph} km/h`;
+  if (windSpeedKmh === null) return;
+  windSpeedEl.textContent = `${windSpeedKmh} km/h`;
   windDirEl.textContent   = `from ${toCardinal(windFromDeg)}`;
   updatedEl.textContent   = `Updated ${lastFetch.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 }
