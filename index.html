@@ -32,10 +32,13 @@
       <button class="toggle-opt" data-val="gusts">Gusts</button>
     </div>
 
-    <div id="compass-ring">
-      <svg id="arrow" class="loading" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="50,4 92,62 66,62 66,136 34,136 34,62 8,62" fill="#22c55e"/>
-      </svg>
+    <div id="compass-wrap">
+      <div id="compass-ring">
+        <svg id="arrow" class="loading" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="50,4 92,62 66,62 66,136 34,136 34,62 8,62" fill="#22c55e"/>
+        </svg>
+      </div>
+      <div id="compass-label">wind direction</div>
     </div>
 
     <div id="effect-cards">
@@ -48,6 +51,11 @@
       <div class="card" data-modal="crosswind">
         <div class="card-label">Crosswind</div>
         <div class="card-value" id="effect-cross">--</div>
+        <div class="aim-arrow-wrap">
+          <svg id="aim-arrow" viewBox="0 0 40 56" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="20,2 34,22 26,22 26,54 14,54 14,22 6,22" fill="#fff"/>
+          </svg>
+        </div>
       </div>
     </div>
 

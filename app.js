@@ -18,6 +18,7 @@ const updatedEl   = document.getElementById('updated');
 const effectDist    = document.getElementById('effect-dist');
 const effectDistDir = document.getElementById('effect-dist-dir');
 const effectCross   = document.getElementById('effect-cross');
+const aimArrowEl    = document.getElementById('aim-arrow');
 const modalOverlay = document.getElementById('modal-overlay');
 const modalTitle   = document.getElementById('modal-title');
 const modalBody    = document.getElementById('modal-body');
@@ -216,6 +217,9 @@ function updateEffect() {
 
   // Crosswind card
   effectCross.textContent = driftM < 1 ? 'Straight' : `Aim ${driftM}m ${driftDir}`;
+  const aimRotation = driftM < 1 ? 0 : Math.min(45, driftM * 4) * (crosswind > 0 ? -1 : 1);
+  aimArrowEl.style.transform = `rotate(${aimRotation}deg)`;
+  aimArrowEl.style.opacity   = driftM < 1 ? '0.25' : '1';
 }
 
 // ── Modal ───────────────────────────────────────────────────────────────

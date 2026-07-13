@@ -118,9 +118,17 @@ header {
   color: #080808;
 }
 
-/* ── Compass ring ── */
-#compass-ring {
+/* ── Compass wrap + ring ── */
+#compass-wrap {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+#compass-ring {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -155,6 +163,31 @@ header {
 
 #arrow.loading {
   animation: arrowPulse 2s ease-in-out infinite;
+}
+
+/* ── Compass wind label ── */
+#compass-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* ── Aim arrow on crosswind card ── */
+.aim-arrow-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.6rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+#aim-arrow {
+  width: 20px;
+  height: 28px;
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.2s;
+  opacity: 0.25;
 }
 
 /* ── Effect cards ── */
