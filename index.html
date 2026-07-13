@@ -48,11 +48,11 @@
     </div>
 
     <div id="effect-cards">
-      <div class="card">
+      <div class="card" data-modal="club">
         <div class="card-label">Club</div>
         <div class="card-value" id="effect-club">--</div>
       </div>
-      <div class="card">
+      <div class="card" data-modal="crosswind">
         <div class="card-label">Crosswind</div>
         <div class="card-value" id="effect-cross">--</div>
       </div>
@@ -63,6 +63,18 @@
       <button id="refresh-btn">Refresh</button>
     </footer>
 
+  </div>
+
+  <!-- ── Info modal (bottom sheet) ── -->
+  <div id="modal-overlay">
+    <div id="modal">
+      <div id="modal-handle"></div>
+      <div id="modal-header">
+        <h2 id="modal-title"></h2>
+        <button id="modal-close">✕</button>
+      </div>
+      <div id="modal-body"></div>
+    </div>
   </div>
 
   <script src="app.js"></script>
