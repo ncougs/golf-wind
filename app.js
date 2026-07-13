@@ -203,13 +203,14 @@ function updateEffect() {
   effectActiveKmh = active;
 
   // Distance card
-  const playsAs150 = Math.round(150 * (1 + pct / 100));
-  if (pct === 0) {
-    effectDist.textContent    = '150m';
+  const clubs = Math.round(Math.abs(150 * pct / 100) / 15);
+  if (pct === 0 || clubs === 0) {
+    effectDist.textContent    = 'no change';
     effectDist.style.color    = '#888';
-    effectDistDir.textContent = 'no adjustment';
+    effectDistDir.textContent = '';
   } else {
-    effectDist.textContent    = `150m → ${playsAs150}m`;
+    const label = clubs === 1 ? 'club' : 'clubs';
+    effectDist.textContent    = `${pct > 0 ? '+' : '-'}${clubs} ${label}`;
     effectDist.style.color    = pct > 0 ? '#f87171' : '#34d399';
     effectDistDir.textContent = pct > 0 ? 'into wind' : 'downwind';
   }
