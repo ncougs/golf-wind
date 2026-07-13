@@ -305,9 +305,15 @@ function openModal(type) {
 
       <div class="modal-calc">
         <div class="modal-calc-display">
-          <span class="modal-calc-from" id="modal-calc-from">${initDist}m</span>
+          <div class="modal-calc-col">
+            <span class="modal-calc-from" id="modal-calc-from">${initDist}m</span>
+            <span class="modal-calc-col-label">actual</span>
+          </div>
           <span class="modal-calc-arrow">→</span>
-          <span class="modal-calc-to" id="modal-calc-to" style="color:${color}">${playsAs(initDist)}m</span>
+          <div class="modal-calc-col">
+            <span class="modal-calc-to" id="modal-calc-to" style="color:${color}">${playsAs(initDist)}m</span>
+            <span class="modal-calc-col-label">playing</span>
+          </div>
         </div>
         <div class="dist-slider-wrap">
           <input type="range" id="modal-dist-slider" min="50" max="300" step="5" value="${initDist}">
