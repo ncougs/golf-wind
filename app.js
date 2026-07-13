@@ -44,6 +44,7 @@ async function start() {
 
   // Refresh wind data every 5 minutes
   setInterval(getLocationAndWind, 5 * 60 * 1000);
+  document.getElementById('refresh-btn').addEventListener('click', getLocationAndWind);
 }
 
 // ── Location + Wind ────────────────────────────────────────────────────
