@@ -10,17 +10,19 @@ const headingBuffer = [];
 const BUFFER_SIZE = 6;
 
 // ── DOM ────────────────────────────────────────────────────────────────
-const arrowEl     = document.getElementById('arrow');
-const windSpeedEl = document.getElementById('wind-speed');
-const windDirEl   = document.getElementById('wind-dir');
-const statusEl    = document.getElementById('status');
-const updatedEl   = document.getElementById('updated');
+const arrowEl      = document.getElementById('arrow');
+const windSpeedEl  = document.getElementById('wind-speed');
+const windDirEl    = document.getElementById('wind-dir');
+const windOtherEl  = document.getElementById('wind-other');
+const statusEl     = document.getElementById('status');
+const updatedEl    = document.getElementById('updated');
 const effectDist    = document.getElementById('effect-dist');
 const effectPlaysAs = document.getElementById('effect-plays-as');
 const effectDistDir = document.getElementById('effect-dist-dir');
-const modalOverlay = document.getElementById('modal-overlay');
-const modalTitle   = document.getElementById('modal-title');
-const modalBody    = document.getElementById('modal-body');
+const modalOverlay  = document.getElementById('modal-overlay');
+const modalTitle    = document.getElementById('modal-title');
+const modalBody     = document.getElementById('modal-body');
+const refreshBtn    = document.getElementById('refresh-btn');
 
 // Derived from windFromDeg — cached so updateArrow and updateEffect share it
 let windGoingDeg = null;
@@ -43,7 +45,7 @@ let effectActiveKmh = null;
 function init() {
   getLocationAndWind();
   setInterval(getLocationAndWind, 5 * 60 * 1000);
-  document.getElementById('refresh-btn').addEventListener('click', getLocationAndWind);
+  refreshBtn.addEventListener('click', getLocationAndWind);
 
   // Modal triggers
   document.querySelectorAll('.card').forEach(card => {
@@ -51,6 +53,33 @@ function init() {
   });
   document.getElementById('modal-close').addEventListener('click', closeModal);
   modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
+
+  // Swipe-to-dismiss bottom sheet
+  const modal = document.getElementById('modal');
+  let dragStartY = 0;
+  modal.addEventListener('touchstart', e => {
+    dragStartY = e.touches[0].clientY;
+    modal.style.transition = 'none';
+  }, { passive: true });
+  modal.addEventListener('touchmove', e => {
+    const dy = Math.max(0, e.touches[0].clientY - dragStartY);
+    modal.style.transform = `translateY(${dy}px)`;
+  }, { passive: true });
+  modal.addEventListener('touchend', e => {
+    const dy = e.changedTouches[0].clientY - dragStartY;
+    if (dy > 80) {
+      modal.style.transition = 'transform 0.25s ease-out';
+      modal.style.transform = 'translateY(100%)';
+      setTimeout(() => {
+        modal.style.transition = '';
+        modal.style.transform = '';
+        modalOverlay.classList.remove('open');
+      }, 250);
+    } else {
+      modal.style.transition = '';
+      modal.style.transform = '';
+    }
+  });
 
   // Wind/gusts toggle
   document.querySelectorAll('.toggle-opt').forEach(btn => {
@@ -63,12 +92,14 @@ function init() {
       typeof DeviceOrientationEvent.requestPermission === 'function') {
     const compassBtn = document.getElementById('compass-btn');
     compassBtn.style.display = 'inline-block';
+    statusEl.textContent = 'Tap "Enable compass" to orient the arrow';
     compassBtn.addEventListener('click', async () => {
       try {
         const permission = await DeviceOrientationEvent.requestPermission();
         if (permission === 'granted') {
           window.addEventListener('deviceorientation', onOrientation, true);
           compassBtn.style.display = 'none';
+          statusEl.textContent = 'Point at your target';
         } else {
           statusEl.textContent = 'Compass permission denied';
         }
@@ -85,22 +116,31 @@ init();
 
 // ── Location + Wind ────────────────────────────────────────────────────
 function getLocationAndWind() {
-  statusEl.textContent = 'Getting location...';
+  refreshBtn.disabled = true;
+  refreshBtn.textContent = 'Refreshing…';
 
   if (!navigator.geolocation) {
     statusEl.textContent = 'Geolocation not supported';
+    resetRefreshBtn();
     return;
   }
 
   navigator.geolocation.getCurrentPosition(
     pos => fetchWind(pos.coords.latitude, pos.coords.longitude),
-    err => { statusEl.textContent = 'Location error: ' + err.message; },
+    err => {
+      statusEl.textContent = 'Location error: ' + err.message;
+      resetRefreshBtn();
+    },
     { enableHighAccuracy: false, timeout: 10000 }
   );
 }
 
+function resetRefreshBtn() {
+  refreshBtn.disabled = false;
+  refreshBtn.textContent = 'Refresh';
+}
+
 async function fetchWind(lat, lng) {
-  statusEl.textContent = 'Fetching wind...';
   try {
     const url = `https://api.open-meteo.com/v1/forecast` +
       `?latitude=${lat}&longitude=${lng}` +
@@ -123,6 +163,8 @@ async function fetchWind(lat, lng) {
       : 'Waiting for compass...';
   } catch (err) {
     statusEl.textContent = 'Wind data unavailable';
+  } finally {
+    resetRefreshBtn();
   }
 }
 
@@ -130,8 +172,17 @@ function updateWindDisplay() {
   if (windSpeedKmh === null) return;
   const activeVal  = useGusts ? windGustKmh : windSpeedKmh;
   const otherLabel = useGusts ? `wind ${windSpeedKmh} km/h` : `gusts ${windGustKmh} km/h`;
+
+  // Animate the number if it changed
+  if (windSpeedEl.textContent !== String(activeVal)) {
+    windSpeedEl.classList.remove('changing');
+    void windSpeedEl.offsetWidth; // force reflow to restart animation
+    windSpeedEl.classList.add('changing');
+  }
+
   windSpeedEl.textContent = `${activeVal}`;
-  windDirEl.textContent   = `from ${toCardinal(windFromDeg)} · ${otherLabel}`;
+  windDirEl.textContent   = `from ${toCardinal(windFromDeg)}`;
+  windOtherEl.textContent = otherLabel;
   updatedEl.textContent   = `Updated ${lastFetch.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 }
 
@@ -164,7 +215,6 @@ function updateArrow() {
   if (windFromDeg === null || deviceHeading === null) return;
 
   const rotation = windGoingDeg - deviceHeading;
-
   arrowEl.style.transform = `rotate(${rotation}deg)`;
   updateEffect();
 
@@ -202,7 +252,7 @@ function updateEffect() {
   effectActiveKmh = active;
 
   // Distance card
-  const clubs     = Math.round(Math.abs(150 * pct / 100) / 15);
+  const clubs      = Math.round(Math.abs(150 * pct / 100) / 15);
   const playsAs150 = Math.round(150 * (1 + pct / 100));
   if (pct === 0 || clubs === 0) {
     effectDist.textContent    = 'no change';
@@ -220,7 +270,13 @@ function updateEffect() {
 
 // ── Modal ───────────────────────────────────────────────────────────────
 function openModal(type) {
-  if (effectPct === null) return;
+  if (effectPct === null) {
+    statusEl.textContent = 'Wind data still loading…';
+    return;
+  }
+
+  // Clear any leftover swipe transform from a previous open
+  document.getElementById('modal').style.transform = '';
 
   if (type === 'distance') {
     const direction = effectPct > 0 ? 'headwind' : effectPct < 0 ? 'tailwind' : 'neutral';
@@ -263,20 +319,12 @@ function closeModal() {
   modalOverlay.classList.remove('open');
 }
 
-function setDistance(d) {
-  shotDistance = d;
-  distanceVal.textContent = `${d}m`;
-  localStorage.setItem('shotDistance', d);
-  effectClubs = null; // force re-render with new distance
-  updateEffect();
-}
-
 function setGustMode(val) {
   useGusts = val;
   localStorage.setItem('useGusts', val);
   updateToggleUI();
   updateWindDisplay();
-  effectClubs = null; // force effect re-render with new source
+  effectPct = null; // force effect re-render with new source
   updateEffect();
 }
 
@@ -287,10 +335,6 @@ function updateToggleUI() {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
-function clubColor(n) {
-  return n > 0 ? '#f87171' : n < 0 ? '#34d399' : '#888';
-}
-
 function toCardinal(deg) {
   const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
   return dirs[Math.round(deg / 45) % 8];
