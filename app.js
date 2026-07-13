@@ -180,6 +180,7 @@ function updateWindDisplay() {
     windSpeedEl.classList.add('changing');
   }
 
+  windSpeedEl.style.color = '#fff';
   windSpeedEl.textContent = `${activeVal}`;
   windDirEl.textContent   = `from ${toCardinal(windFromDeg)}`;
   windOtherEl.textContent = otherLabel;

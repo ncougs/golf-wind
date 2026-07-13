@@ -17,20 +17,18 @@
   <div id="main-screen" class="active">
 
     <header>
-      <span id="header-title">Golf Wind</span>
       <span id="updated">--:--</span>
     </header>
 
     <div id="wind-stats">
       <div id="wind-speed">--</div>
       <div id="wind-unit">km/h</div>
+      <div id="wind-toggle">
+        <button class="toggle-opt" data-val="wind">Wind</button>
+        <button class="toggle-opt" data-val="gusts">Gusts</button>
+      </div>
       <div id="wind-dir">locating...</div>
       <div id="wind-other"></div>
-    </div>
-
-    <div id="wind-toggle">
-      <button class="toggle-opt" data-val="wind">Wind</button>
-      <button class="toggle-opt" data-val="gusts">Gusts</button>
     </div>
 
     <div id="compass-ring">
@@ -42,17 +40,19 @@
     <div id="effect-cards">
       <div class="card" data-modal="distance">
         <div class="card-label">Distance</div>
+        <span class="card-chevron">›</span>
         <div class="card-value" id="effect-dist">--</div>
         <div class="card-plays-as" id="effect-plays-as"></div>
         <div class="card-sub" id="effect-dist-dir"></div>
-        <div class="card-tap">details ›</div>
       </div>
     </div>
 
     <footer>
       <div id="status">Locating...</div>
-      <button id="compass-btn">Enable compass</button>
-      <button id="refresh-btn">Refresh</button>
+      <div id="footer-actions">
+        <button id="compass-btn">Enable compass</button>
+        <button id="refresh-btn">Refresh</button>
+      </div>
     </footer>
 
   </div>
