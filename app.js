@@ -83,6 +83,7 @@ async function fetchWind(lat, lng) {
     lastFetch     = new Date();
 
     updateWindDisplay();
+    updateEffect();
     statusEl.textContent = deviceHeading !== null
       ? 'Point at your target'
       : 'Waiting for compass...';
@@ -130,11 +131,10 @@ function updateArrow() {
 
   // Arrow pointing up = wind heading toward your target
   // Rotate by the difference between wind direction and where you're facing
-  const rotation     = windGoingDeg - deviceHeading;
-  const angleDiffRad = rotation * Math.PI / 180;
+  const rotation = windGoingDeg - deviceHeading;
 
   arrowEl.style.transform = `rotate(${rotation}deg)`;
-  updateEffect(angleDiffRad);
+  updateEffect();
 
   if (statusEl.textContent === 'Waiting for compass...') {
     statusEl.textContent = 'Point at your target';
@@ -142,8 +142,11 @@ function updateArrow() {
 }
 
 // ── Wind Effect Estimator ───────────────────────────────────────────────
-function updateEffect(angleDiffRad) {
+function updateEffect() {
   if (windSpeedKmh === null || deviceHeading === null) return;
+
+  const windGoingDeg = (windFromDeg + 180) % 360;
+  const angleDiffRad = (windGoingDeg - deviceHeading) * Math.PI / 180;
 
   // Positive = headwind, negative = tailwind
   const headwind  = -windSpeedKmh * Math.cos(angleDiffRad);
