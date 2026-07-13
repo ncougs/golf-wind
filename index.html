@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Golf Wind</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+
+    <div id="start-screen">
+      <div id="logo">Golf Wind</div>
+      <p id="tagline">Point at your target.<br>See where the wind takes it.</p>
+      <button id="start-btn">Start</button>
+    </div>
+
+    <div id="main-screen">
+      <div id="wind-info">
+        <div id="wind-speed">-- mph</div>
+        <div id="wind-dir">locating...</div>
+      </div>
+
+      <div id="arrow-container">
+        <svg id="arrow" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="50,4 92,62 66,62 66,136 34,136 34,62 8,62" fill="#22c55e"/>
+        </svg>
+      </div>
+
+      <div id="footer">
+        <div id="status">Point at your target</div>
+        <div id="updated"></div>
+      </div>
+    </div>
+
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

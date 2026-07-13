@@ -1,0 +1,126 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #080808;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  height: 100dvh;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app {
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Start screen ── */
+
+#start-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  text-align: center;
+  padding: 2rem;
+}
+
+#logo {
+  font-size: 2.8rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #22c55e;
+}
+
+#tagline {
+  font-size: 1.05rem;
+  color: #666;
+  line-height: 1.6;
+}
+
+#start-btn {
+  margin-top: 0.5rem;
+  background: #22c55e;
+  color: #080808;
+  border: none;
+  padding: 0.9rem 3rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-radius: 999px;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+}
+
+#start-btn:active {
+  opacity: 0.85;
+}
+
+/* ── Main screen ── */
+
+#main-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  padding: 3.5rem 1.5rem 3rem;
+}
+
+#main-screen.active {
+  display: flex;
+}
+
+#wind-info {
+  text-align: center;
+}
+
+#wind-speed {
+  font-size: 4rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+#wind-dir {
+  font-size: 1.1rem;
+  color: #555;
+  margin-top: 0.4rem;
+}
+
+#arrow-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#arrow {
+  width: 160px;
+  height: 160px;
+  transition: transform 0.12s ease-out;
+  filter: drop-shadow(0 0 24px rgba(34, 197, 94, 0.5));
+}
+
+#footer {
+  text-align: center;
+}
+
+#status {
+  font-size: 0.95rem;
+  color: #555;
+}
+
+#updated {
+  font-size: 0.75rem;
+  color: #333;
+  margin-top: 0.3rem;
+}
