@@ -72,7 +72,7 @@ body {
   justify-content: space-between;
   width: 100%;
   height: 100%;
-  padding: 3.5rem 1.5rem 3rem;
+  padding: 2.5rem 1.5rem 2rem;
 }
 
 #main-screen.active {
@@ -104,8 +104,8 @@ body {
 }
 
 #arrow {
-  width: 160px;
-  height: 160px;
+  width: 120px;
+  height: 120px;
   transition: transform 0.12s ease-out;
   filter: drop-shadow(0 0 24px rgba(34, 197, 94, 0.5));
 }
