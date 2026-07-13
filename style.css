@@ -134,6 +134,7 @@ header {
 #compass-ring {
   position: relative;
   flex: 1;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -172,7 +173,7 @@ header {
 
 #wind-label {
   position: absolute;
-  top: calc(50% + 72px);
+  top: calc(50% + 58px);
   left: 50%;
   transform: translateX(-50%);
   font-size: 0.6rem;
