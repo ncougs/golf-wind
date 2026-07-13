@@ -13,22 +13,8 @@
 </head>
 <body>
 
-  <!-- ── Start screen ── -->
-  <div id="start-screen">
-    <div id="start-inner">
-      <div id="logo">
-        <svg width="48" height="48" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
-          <polygon points="50,4 92,62 66,62 66,136 34,136 34,62 8,62" fill="#22c55e"/>
-        </svg>
-        <span>Golf Wind</span>
-      </div>
-      <p id="tagline">Point at your target.<br>The arrow shows where the wind goes.</p>
-      <button id="start-btn">Get Started</button>
-    </div>
-  </div>
-
   <!-- ── Main screen ── -->
-  <div id="main-screen">
+  <div id="main-screen" class="active">
 
     <header>
       <span id="header-title">Golf Wind</span>
@@ -47,7 +33,7 @@
     </div>
 
     <div id="compass-ring">
-      <svg id="arrow" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
+      <svg id="arrow" class="loading" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
         <polygon points="50,4 92,62 66,62 66,136 34,136 34,62 8,62" fill="#22c55e"/>
       </svg>
     </div>
@@ -66,7 +52,8 @@
     </div>
 
     <footer>
-      <div id="status">Point at your target</div>
+      <div id="status">Locating...</div>
+      <button id="compass-btn">Enable compass</button>
       <button id="refresh-btn">Refresh</button>
     </footer>
 

@@ -10,8 +10,6 @@ const headingBuffer = [];
 const BUFFER_SIZE = 6;
 
 // ── DOM ────────────────────────────────────────────────────────────────
-const startScreen = document.getElementById('start-screen');
-const mainScreen  = document.getElementById('main-screen');
 const arrowEl     = document.getElementById('arrow');
 const windSpeedEl = document.getElementById('wind-speed');
 const windDirEl   = document.getElementById('wind-dir');
@@ -42,31 +40,8 @@ let effectDriftDir = null;
 let effectActiveKmh = null;
 
 // ── Entry point ────────────────────────────────────────────────────────
-document.getElementById('start-btn').addEventListener('click', start);
-
-async function start() {
-  // iOS 13+ requires explicit permission for DeviceOrientationEvent
-  if (typeof DeviceOrientationEvent !== 'undefined' &&
-      typeof DeviceOrientationEvent.requestPermission === 'function') {
-    try {
-      const permission = await DeviceOrientationEvent.requestPermission();
-      if (permission !== 'granted') {
-        alert('Compass permission is required. Please allow it and try again.');
-        return;
-      }
-    } catch (err) {
-      alert('Could not request compass permission: ' + err.message);
-      return;
-    }
-  }
-
-  startScreen.style.display = 'none';
-  mainScreen.classList.add('active');
-
+function init() {
   getLocationAndWind();
-  window.addEventListener('deviceorientation', onOrientation, true);
-
-  // Refresh wind data every 5 minutes
   setInterval(getLocationAndWind, 5 * 60 * 1000);
   document.getElementById('refresh-btn').addEventListener('click', getLocationAndWind);
 
@@ -83,7 +58,30 @@ async function start() {
   });
   updateToggleUI();
 
+  // iOS 13+ requires a user gesture to grant compass permission
+  if (typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof DeviceOrientationEvent.requestPermission === 'function') {
+    const compassBtn = document.getElementById('compass-btn');
+    compassBtn.style.display = 'inline-block';
+    compassBtn.addEventListener('click', async () => {
+      try {
+        const permission = await DeviceOrientationEvent.requestPermission();
+        if (permission === 'granted') {
+          window.addEventListener('deviceorientation', onOrientation, true);
+          compassBtn.style.display = 'none';
+        } else {
+          statusEl.textContent = 'Compass permission denied';
+        }
+      } catch (err) {
+        statusEl.textContent = 'Could not enable compass';
+      }
+    });
+  } else {
+    window.addEventListener('deviceorientation', onOrientation, true);
+  }
 }
+
+init();
 
 // ── Location + Wind ────────────────────────────────────────────────────
 function getLocationAndWind() {
@@ -139,6 +137,7 @@ function updateWindDisplay() {
 
 // ── Compass ────────────────────────────────────────────────────────────
 function onOrientation(event) {
+  arrowEl.classList.remove('loading');
   // webkitCompassHeading = iOS true compass bearing (preferred)
   // alpha = standard, but 0 is arbitrary on many Android devices
   const raw = event.webkitCompassHeading != null
