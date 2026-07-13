@@ -23,8 +23,16 @@ const modalOverlay = document.getElementById('modal-overlay');
 const modalTitle   = document.getElementById('modal-title');
 const modalBody    = document.getElementById('modal-body');
 
+// Derived from windFromDeg — cached so updateArrow and updateEffect share it
+let windGoingDeg = null;
+
 // Last computed effect values — used to populate modal
-let lastEffect = null;
+let effectHeadwind = null;
+let effectCrosswind = null;
+let effectClubs = null;
+let effectDriftM = null;
+let effectDriftDir = null;
+let effectGustKmh = null;
 
 // ── Entry point ────────────────────────────────────────────────────────
 document.getElementById('start-btn').addEventListener('click', start);
@@ -91,6 +99,7 @@ async function fetchWind(lat, lng) {
     const data = await res.json();
 
     windFromDeg   = data.current.wind_direction_10m;
+    windGoingDeg  = (windFromDeg + 180) % 360;
     windSpeedKmh  = Math.round(data.current.wind_speed_10m);
     windGustKmh   = Math.round(data.current.wind_gusts_10m);
     lastFetch     = new Date();
@@ -139,11 +148,6 @@ function circularMean(angles) {
 function updateArrow() {
   if (windFromDeg === null || deviceHeading === null) return;
 
-  // Wind is reported as where it comes FROM; convert to where it's going TO
-  const windGoingDeg = (windFromDeg + 180) % 360;
-
-  // Arrow pointing up = wind heading toward your target
-  // Rotate by the difference between wind direction and where you're facing
   const rotation = windGoingDeg - deviceHeading;
 
   arrowEl.style.transform = `rotate(${rotation}deg)`;
@@ -158,7 +162,6 @@ function updateArrow() {
 function updateEffect() {
   if (windSpeedKmh === null || deviceHeading === null) return;
 
-  const windGoingDeg = (windFromDeg + 180) % 360;
   const angleDiffRad = (windGoingDeg - deviceHeading) * Math.PI / 180;
 
   // Positive = headwind, negative = tailwind
@@ -175,44 +178,45 @@ function updateEffect() {
   const driftM   = Math.round(Math.abs(crosswind) * 5 / 16);
   const driftDir = crosswind > 0 ? 'left' : 'right'; // ball pushed right → aim left
 
+  // Skip DOM update if discrete outputs haven't changed
+  if (clubs === effectClubs && driftM === effectDriftM && driftDir === effectDriftDir) return;
+
+  effectHeadwind  = headwind;
+  effectCrosswind = crosswind;
+  effectClubs     = clubs;
+  effectDriftM    = driftM;
+  effectDriftDir  = driftDir;
+  effectGustKmh   = windGustKmh;
+
   // Club line
   if (clubs === 0) {
-    effectClub.textContent = 'No club adjustment';
+    effectClub.textContent = 'No adjustment';
     effectClub.style.color = '#888';
   } else {
-    const sign  = clubs > 0 ? '+' : '';
-    const label = Math.abs(clubs) === 1 ? 'club' : 'clubs';
-    effectClub.textContent = `${sign}${clubs} ${label}`;
-    effectClub.style.color = clubs > 0 ? '#f87171' : '#34d399';
+    effectClub.textContent = formatClubs(clubs);
+    effectClub.style.color = clubColor(clubs);
   }
 
   // Crosswind line
-  if (driftM < 1) {
-    effectCross.textContent = 'Straight into wind';
-  } else {
-    effectCross.textContent = `Aim ${driftM}m ${driftDir}`;
-  }
-
-  lastEffect = { headwind, crosswind, clubs, driftM, driftDir };
+  effectCross.textContent = driftM < 1 ? 'Straight' : `Aim ${driftM}m ${driftDir}`;
 }
 
 // ── Modal ───────────────────────────────────────────────────────────────
 function openModal(type) {
-  if (!lastEffect) return;
-  const { headwind, crosswind, clubs, driftM, driftDir } = lastEffect;
+  if (effectClubs === null) return;
 
   if (type === 'club') {
+    const direction = effectClubs > 0 ? 'headwind' : effectClubs < 0 ? 'tailwind' : 'neutral';
+    const hw        = Math.abs(Math.round(effectHeadwind));
+    const color     = clubColor(effectClubs);
+    const summary   = effectClubs === 0 ? 'No adjustment needed' : `${formatClubs(effectClubs)} — ${direction}`;
     modalTitle.textContent = 'Club Adjustment';
-    const direction = clubs > 0 ? 'headwind' : clubs < 0 ? 'tailwind' : 'neutral';
-    const hw = Math.abs(Math.round(headwind));
     modalBody.innerHTML = `
-      <div class="summary" style="color:${clubs > 0 ? '#f87171' : clubs < 0 ? '#34d399' : '#888'}">
-        ${clubs === 0 ? 'No adjustment needed' : `${clubs > 0 ? '+' : ''}${clubs} ${Math.abs(clubs) === 1 ? 'club' : 'clubs'} — ${direction}`}
-      </div>
+      <div class="summary" style="color:${color}">${summary}</div>
       <p class="explanation">
-        Gusts of <strong>${windGustKmh} km/h</strong> with <strong>${hw} km/h</strong> as the ${direction} component into your shot line.
+        Gusts of <strong>${effectGustKmh} km/h</strong> with <strong>${hw} km/h</strong> as the ${direction} component.
         The standard caddie rule: every 16 km/h of headwind = 1 extra club. Tailwind helps less —
-        you only drop a club every 24 km/h downwind. These figures are based on a mid-iron approach.
+        you only drop a club every 24 km/h downwind. Calibrated for a mid-iron approach.
       </p>
       <h3>By club type</h3>
       <div class="club-row">
@@ -229,24 +233,24 @@ function openModal(type) {
       </div>
       <div class="club-row">
         <span class="club-name">Long irons / Hybrids</span>
-        <span class="club-note">Slightly less affected per club gap — lower trajectory. Adjust conservatively.</span>
+        <span class="club-note">Slightly less affected — lower trajectory. Adjust conservatively.</span>
       </div>
       <div class="club-row">
         <span class="club-name">Driver</span>
         <span class="club-note">Can't add a club. Into wind: tee lower and flight it down. Downwind: tee higher and swing easy.</span>
       </div>
     `;
-  } else {
+  } else if (type === 'crosswind') {
+    const cw      = Math.abs(Math.round(effectCrosswind));
+    const pushDir = effectCrosswind > 0 ? 'right' : 'left';
+    const summary = effectDriftM < 1 ? 'No significant crosswind' : `Aim ${effectDriftM}m ${effectDriftDir}`;
     modalTitle.textContent = 'Crosswind Aim';
-    const cw = Math.abs(Math.round(crosswind));
     modalBody.innerHTML = `
-      <div class="summary" style="color:#fff">
-        ${driftM < 1 ? 'No significant crosswind' : `Aim ${driftM}m ${driftDir}`}
-      </div>
+      <div class="summary" style="color:#fff">${summary}</div>
       <p class="explanation">
-        Gusts of <strong>${windGustKmh} km/h</strong> with <strong>${cw} km/h</strong> across your shot line.
-        Estimate: ~5m of drift per 16 km/h of crosswind on a 150m approach. Scale up for longer shots,
-        down for shorter ones. The ball is pushed <strong>${crosswind > 0 ? 'right' : 'left'}</strong> — so aim ${driftDir}.
+        Gusts of <strong>${effectGustKmh} km/h</strong> with <strong>${cw} km/h</strong> across your shot line.
+        Estimate: ~5m of drift per 16 km/h on a 150m approach. Scale up for longer shots, down for shorter.
+        The ball is pushed <strong>${pushDir}</strong> — so aim ${effectDriftDir}.
       </p>
       <h3>By club type</h3>
       <div class="club-row">
@@ -263,11 +267,11 @@ function openModal(type) {
       </div>
       <div class="club-row">
         <span class="club-name">Long irons / Hybrids</span>
-        <span class="club-note">Slightly less drift — faster ball speed and lower trajectory. Reduce estimate slightly.</span>
+        <span class="club-note">Slightly less drift — faster ball and lower trajectory. Reduce estimate slightly.</span>
       </div>
       <div class="club-row">
         <span class="club-name">Driver</span>
-        <span class="club-note">Low trajectory and high speed — much less lateral drift. The estimate will overstate it significantly.</span>
+        <span class="club-note">Low trajectory and high speed — much less lateral drift. The estimate will overstate it.</span>
       </div>
     `;
   }
@@ -280,6 +284,16 @@ function closeModal() {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
+function formatClubs(n) {
+  const sign  = n > 0 ? '+' : '';
+  const label = Math.abs(n) === 1 ? 'club' : 'clubs';
+  return `${sign}${n} ${label}`;
+}
+
+function clubColor(n) {
+  return n > 0 ? '#f87171' : n < 0 ? '#34d399' : '#888';
+}
+
 function toCardinal(deg) {
   const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
   return dirs[Math.round(deg / 45) % 8];
