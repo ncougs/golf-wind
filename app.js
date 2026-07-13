@@ -13,7 +13,6 @@ const BUFFER_SIZE = 6;
 const arrowEl      = document.getElementById('arrow');
 const windSpeedEl  = document.getElementById('wind-speed');
 const windDirEl    = document.getElementById('wind-dir');
-const windOtherEl  = document.getElementById('wind-other');
 const statusEl     = document.getElementById('status');
 const updatedEl    = document.getElementById('updated');
 const effectDist    = document.getElementById('effect-dist');
@@ -171,7 +170,7 @@ async function fetchWind(lat, lng) {
 function updateWindDisplay() {
   if (windSpeedKmh === null) return;
   const activeVal  = useGusts ? windGustKmh : windSpeedKmh;
-  const otherLabel = useGusts ? `wind ${windSpeedKmh} km/h` : `gusts ${windGustKmh} km/h`;
+  const otherLabel = useGusts ? `wind ${windSpeedKmh}` : `gusts ${windGustKmh}`;
 
   // Animate the number if it changed
   if (windSpeedEl.textContent !== String(activeVal)) {
@@ -182,8 +181,7 @@ function updateWindDisplay() {
 
   windSpeedEl.style.color = '#fff';
   windSpeedEl.textContent = `${activeVal}`;
-  windDirEl.textContent   = `from ${toCardinal(windFromDeg)}`;
-  windOtherEl.textContent = otherLabel;
+  windDirEl.textContent   = `from ${toCardinal(windFromDeg)} · ${otherLabel} km/h`;
   updatedEl.textContent   = `Updated ${lastFetch.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 }
 
