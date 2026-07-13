@@ -26,6 +26,9 @@ const modalBody    = document.getElementById('modal-body');
 // Derived from windFromDeg — cached so updateArrow and updateEffect share it
 let windGoingDeg = null;
 
+// Toggle: true = use gusts for effect calculation, false = use avg wind speed
+let useGusts = localStorage.getItem('useGusts') !== 'false';
+
 // Last computed effect values — used to populate modal
 let effectHeadwind = null;
 let effectCrosswind = null;
@@ -69,6 +72,12 @@ async function start() {
   });
   document.getElementById('modal-close').addEventListener('click', closeModal);
   modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
+
+  // Wind/gusts toggle
+  document.querySelectorAll('.toggle-opt').forEach(btn => {
+    btn.addEventListener('click', () => setGustMode(btn.dataset.val === 'gusts'));
+  });
+  updateToggleUI();
 }
 
 // ── Location + Wind ────────────────────────────────────────────────────
@@ -116,8 +125,10 @@ async function fetchWind(lat, lng) {
 
 function updateWindDisplay() {
   if (windSpeedKmh === null) return;
-  windSpeedEl.textContent = `${windSpeedKmh}`;
-  windDirEl.textContent   = `from ${toCardinal(windFromDeg)} · gusts ${windGustKmh} km/h`;
+  const activeVal  = useGusts ? windGustKmh : windSpeedKmh;
+  const otherLabel = useGusts ? `wind ${windSpeedKmh} km/h` : `gusts ${windGustKmh} km/h`;
+  windSpeedEl.textContent = `${activeVal}`;
+  windDirEl.textContent   = `from ${toCardinal(windFromDeg)} · ${otherLabel}`;
   updatedEl.textContent   = `Updated ${lastFetch.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 }
 
@@ -164,10 +175,11 @@ function updateEffect() {
 
   const angleDiffRad = (windGoingDeg - deviceHeading) * Math.PI / 180;
 
+  const active = useGusts ? windGustKmh : windSpeedKmh;
   // Positive = headwind, negative = tailwind
-  const headwind  = -windGustKmh * Math.cos(angleDiffRad);
+  const headwind  = -active * Math.cos(angleDiffRad);
   // Positive = wind pushing ball right, negative = pushing left
-  const crosswind =  windGustKmh * Math.sin(angleDiffRad);
+  const crosswind =  active * Math.sin(angleDiffRad);
 
   // Club adjustment: 1 club per 16 km/h headwind, 1 club per 24 km/h tailwind
   const clubs = headwind >= 0
@@ -186,7 +198,7 @@ function updateEffect() {
   effectClubs     = clubs;
   effectDriftM    = driftM;
   effectDriftDir  = driftDir;
-  effectGustKmh   = windGustKmh;
+  effectGustKmh   = active;
 
   // Club line
   if (clubs === 0) {
@@ -214,7 +226,7 @@ function openModal(type) {
     modalBody.innerHTML = `
       <div class="summary" style="color:${color}">${summary}</div>
       <p class="explanation">
-        Gusts of <strong>${effectGustKmh} km/h</strong> with <strong>${hw} km/h</strong> as the ${direction} component.
+        ${useGusts ? 'Gusts' : 'Wind'} of <strong>${effectGustKmh} km/h</strong> with <strong>${hw} km/h</strong> as the ${direction} component.
         The standard caddie rule: every 16 km/h of headwind = 1 extra club. Tailwind helps less —
         you only drop a club every 24 km/h downwind. Calibrated for a mid-iron approach.
       </p>
@@ -248,7 +260,7 @@ function openModal(type) {
     modalBody.innerHTML = `
       <div class="summary" style="color:#fff">${summary}</div>
       <p class="explanation">
-        Gusts of <strong>${effectGustKmh} km/h</strong> with <strong>${cw} km/h</strong> across your shot line.
+        ${useGusts ? 'Gusts' : 'Wind'} of <strong>${effectGustKmh} km/h</strong> with <strong>${cw} km/h</strong> across your shot line.
         Estimate: ~5m of drift per 16 km/h on a 150m approach. Scale up for longer shots, down for shorter.
         The ball is pushed <strong>${pushDir}</strong> — so aim ${effectDriftDir}.
       </p>
@@ -281,6 +293,21 @@ function openModal(type) {
 
 function closeModal() {
   modalOverlay.classList.remove('open');
+}
+
+function setGustMode(val) {
+  useGusts = val;
+  localStorage.setItem('useGusts', val);
+  updateToggleUI();
+  updateWindDisplay();
+  effectClubs = null; // force effect re-render with new source
+  updateEffect();
+}
+
+function updateToggleUI() {
+  document.querySelectorAll('.toggle-opt').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.val === (useGusts ? 'gusts' : 'wind'));
+  });
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
