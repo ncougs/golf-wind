@@ -94,7 +94,7 @@ async function fetchWind(lat, lng) {
 
 function updateWindDisplay() {
   if (windSpeedKmh === null) return;
-  windSpeedEl.textContent = `${windSpeedKmh} km/h`;
+  windSpeedEl.textContent = `${windSpeedKmh}`;
   windDirEl.textContent   = `from ${toCardinal(windFromDeg)} · gusts ${windGustKmh} km/h`;
   updatedEl.textContent   = `Updated ${lastFetch.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 }
