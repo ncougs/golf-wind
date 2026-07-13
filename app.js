@@ -17,6 +17,8 @@ const windSpeedEl = document.getElementById('wind-speed');
 const windDirEl   = document.getElementById('wind-dir');
 const statusEl    = document.getElementById('status');
 const updatedEl   = document.getElementById('updated');
+const effectClub  = document.getElementById('effect-club');
+const effectCross = document.getElementById('effect-cross');
 
 // ── Entry point ────────────────────────────────────────────────────────
 document.getElementById('start-btn').addEventListener('click', start);
@@ -128,12 +130,51 @@ function updateArrow() {
 
   // Arrow pointing up = wind heading toward your target
   // Rotate by the difference between wind direction and where you're facing
-  const rotation = windGoingDeg - deviceHeading;
+  const rotation     = windGoingDeg - deviceHeading;
+  const angleDiffRad = rotation * Math.PI / 180;
 
   arrowEl.style.transform = `rotate(${rotation}deg)`;
+  updateEffect(angleDiffRad);
 
   if (statusEl.textContent === 'Waiting for compass...') {
     statusEl.textContent = 'Point at your target';
+  }
+}
+
+// ── Wind Effect Estimator ───────────────────────────────────────────────
+function updateEffect(angleDiffRad) {
+  if (windSpeedKmh === null || deviceHeading === null) return;
+
+  // Positive = headwind, negative = tailwind
+  const headwind  = -windSpeedKmh * Math.cos(angleDiffRad);
+  // Positive = wind pushing ball right, negative = pushing left
+  const crosswind =  windSpeedKmh * Math.sin(angleDiffRad);
+
+  // Club adjustment: 1 club per 16 km/h headwind, 1 club per 24 km/h tailwind
+  const clubs = headwind >= 0
+    ? Math.round(headwind / 16)
+    : Math.round(headwind / 24);
+
+  // Crosswind drift: ~5m per 16 km/h on a typical approach
+  const driftM   = Math.round(Math.abs(crosswind) * 5 / 16);
+  const driftDir = crosswind > 0 ? 'left' : 'right'; // ball pushed right → aim left
+
+  // Club line
+  if (clubs === 0) {
+    effectClub.textContent = 'No club adjustment';
+    effectClub.style.color = '#888';
+  } else {
+    const sign  = clubs > 0 ? '+' : '';
+    const label = Math.abs(clubs) === 1 ? 'club' : 'clubs';
+    effectClub.textContent = `${sign}${clubs} ${label}`;
+    effectClub.style.color = clubs > 0 ? '#f87171' : '#34d399';
+  }
+
+  // Crosswind line
+  if (driftM < 1) {
+    effectCross.textContent = 'Straight into wind';
+  } else {
+    effectCross.textContent = `Aim ${driftM}m ${driftDir}`;
   }
 }
 
