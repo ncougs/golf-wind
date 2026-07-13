@@ -20,7 +20,6 @@ const updatedEl   = document.getElementById('updated');
 const effectDist    = document.getElementById('effect-dist');
 const effectDistDir = document.getElementById('effect-dist-dir');
 const effectCross   = document.getElementById('effect-cross');
-const distanceVal   = document.getElementById('distance-val');
 const modalOverlay = document.getElementById('modal-overlay');
 const modalTitle   = document.getElementById('modal-title');
 const modalBody    = document.getElementById('modal-body');
@@ -84,9 +83,6 @@ async function start() {
   });
   updateToggleUI();
 
-  // Distance drag
-  distanceVal.textContent = `${shotDistance}m`;
-  initDistanceDrag();
 }
 
 // ── Location + Wind ────────────────────────────────────────────────────
@@ -207,14 +203,15 @@ function updateEffect() {
   effectActiveKmh = active;
 
   // Distance card
+  const playsAs150 = Math.round(150 * (1 + pct / 100));
   if (pct === 0) {
-    effectDist.textContent    = 'No adjustment';
+    effectDist.textContent    = '150m';
     effectDist.style.color    = '#888';
-    effectDistDir.textContent = '';
+    effectDistDir.textContent = 'no adjustment';
   } else {
-    effectDist.textContent    = `${pct > 0 ? '+' : ''}${pct}%`;
+    effectDist.textContent    = `150m → ${playsAs150}m`;
     effectDist.style.color    = pct > 0 ? '#f87171' : '#34d399';
-    effectDistDir.textContent = pct > 0 ? 'headwind' : 'tailwind';
+    effectDistDir.textContent = pct > 0 ? 'into wind' : 'downwind';
   }
 
   // Crosswind card
@@ -229,35 +226,34 @@ function openModal(type) {
     const direction = effectPct > 0 ? 'headwind' : effectPct < 0 ? 'tailwind' : 'neutral';
     const hw        = Math.abs(Math.round(effectHeadwind));
     const color     = effectPct > 0 ? '#f87171' : effectPct < 0 ? '#34d399' : '#888';
-    const summary   = effectPct === 0
-      ? 'No adjustment needed'
-      : `${effectPct > 0 ? '+' : ''}${effectPct}% — ${direction}`;
+    const initDist  = shotDistance;
+
+    const formatPlaysAs = (dist) => {
+      const pa = Math.round(dist * (1 + effectPct / 100));
+      return effectPct === 0
+        ? `${dist}m — no adjustment`
+        : `${dist}m shot playing ${pa}m`;
+    };
+
     modalTitle.textContent = 'Distance Adjustment';
     modalBody.innerHTML = `
-      <div class="summary" style="color:${color}">${summary}</div>
+      <div class="plays-as-display" id="plays-as-display" style="color:${color}">
+        ${formatPlaysAs(initDist)}
+      </div>
+      <div class="dist-slider-wrap">
+        <input type="range" id="modal-dist-slider" min="50" max="300" step="5" value="${initDist}">
+        <div class="dist-slider-labels"><span>50m</span><span>300m</span></div>
+      </div>
       <p class="explanation">
         ${useGusts ? 'Gusts' : 'Wind'} of <strong>${effectActiveKmh} km/h</strong> with <strong>${hw} km/h</strong> as the ${direction} component.
-        Add or subtract this percentage from your carry distance — it works for every club.
-        16 km/h of headwind = +10%. Tailwind helps less: 16 km/h = roughly −7%.
+        16 km/h of headwind = +10% carry. Tailwind helps less: 16 km/h ≈ −7%.
       </p>
-      <h3>How to apply it</h3>
-      <div class="club-row">
-        <span class="club-name">Wedge 90m</span>
-        <span class="club-note">${effectPct > 0 ? `+${effectPct}% → play as ${Math.round(90 * (1 + effectPct / 100))}m` : effectPct < 0 ? `${effectPct}% → play as ${Math.round(90 * (1 + effectPct / 100))}m` : 'No change — 90m'}</span>
-      </div>
-      <div class="club-row">
-        <span class="club-name">Iron 150m</span>
-        <span class="club-note">${effectPct > 0 ? `+${effectPct}% → play as ${Math.round(150 * (1 + effectPct / 100))}m` : effectPct < 0 ? `${effectPct}% → play as ${Math.round(150 * (1 + effectPct / 100))}m` : 'No change — 150m'}</span>
-      </div>
-      <div class="club-row">
-        <span class="club-name">Long iron 200m</span>
-        <span class="club-note">${effectPct > 0 ? `+${effectPct}% → play as ${Math.round(200 * (1 + effectPct / 100))}m` : effectPct < 0 ? `${effectPct}% → play as ${Math.round(200 * (1 + effectPct / 100))}m` : 'No change — 200m'}</span>
-      </div>
-      <div class="club-row">
-        <span class="club-name">Driver 250m</span>
-        <span class="club-note">${effectPct > 0 ? `+${effectPct}% → play as ${Math.round(250 * (1 + effectPct / 100))}m` : effectPct < 0 ? `${effectPct}% → play as ${Math.round(250 * (1 + effectPct / 100))}m` : 'No change — 250m'}</span>
-      </div>
     `;
+
+    document.getElementById('modal-dist-slider').addEventListener('input', e => {
+      const d = parseInt(e.target.value);
+      document.getElementById('plays-as-display').textContent = formatPlaysAs(d);
+    });
   } else if (type === 'crosswind') {
     const cw      = Math.abs(Math.round(effectCrosswind));
     const pushDir = effectCrosswind > 0 ? 'right' : 'left';
@@ -299,41 +295,6 @@ function openModal(type) {
 
 function closeModal() {
   modalOverlay.classList.remove('open');
-}
-
-function initDistanceDrag() {
-  const el = document.getElementById('distance-drag');
-  let startX = null;
-  let startDist = null;
-
-  function applyDelta(currentX) {
-    const delta = currentX - startX;
-    const raw   = startDist + Math.round(delta);
-    setDistance(Math.max(50, Math.min(300, Math.round(raw / 5) * 5)));
-  }
-
-  el.addEventListener('touchstart', e => {
-    startX    = e.touches[0].clientX;
-    startDist = shotDistance;
-  }, { passive: true });
-
-  el.addEventListener('touchmove', e => {
-    e.preventDefault();
-    applyDelta(e.touches[0].clientX);
-  }, { passive: false });
-
-  // Mouse fallback for desktop testing
-  el.addEventListener('mousedown', e => {
-    startX    = e.clientX;
-    startDist = shotDistance;
-    const onMove = e => applyDelta(e.clientX);
-    const onUp   = () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  });
 }
 
 function setDistance(d) {
