@@ -142,20 +142,6 @@ header {
   justify-content: center;
 }
 
-.compass-label {
-  position: absolute;
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-  z-index: 1;
-  pointer-events: none;
-}
-.compass-label.north { top: calc(50% - 92px); left: 50%; transform: translateX(-50%); }
-.compass-label.south { top: calc(50% + 82px);  left: 50%; transform: translateX(-50%); }
-.compass-label.east  { left: calc(50% + 84px); top: 50%;  transform: translateY(-50%); }
-.compass-label.west  { left: calc(50% - 92px); top: 50%;  transform: translateY(-50%); }
-
 #compass-ring::before {
   content: '';
   position: absolute;
