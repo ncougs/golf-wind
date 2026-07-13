@@ -149,9 +149,9 @@ function updateEffect() {
   const angleDiffRad = (windGoingDeg - deviceHeading) * Math.PI / 180;
 
   // Positive = headwind, negative = tailwind
-  const headwind  = -windSpeedKmh * Math.cos(angleDiffRad);
+  const headwind  = -windGustKmh * Math.cos(angleDiffRad);
   // Positive = wind pushing ball right, negative = pushing left
-  const crosswind =  windSpeedKmh * Math.sin(angleDiffRad);
+  const crosswind =  windGustKmh * Math.sin(angleDiffRad);
 
   // Club adjustment: 1 club per 16 km/h headwind, 1 club per 24 km/h tailwind
   const clubs = headwind >= 0
