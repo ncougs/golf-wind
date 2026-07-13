@@ -1,6 +1,7 @@
 // ── State ──────────────────────────────────────────────────────────────
 let windFromDeg = null;   // degrees wind is coming FROM (met convention)
 let windSpeedKmh = null;
+let windGustKmh = null;
 let deviceHeading = null; // compass degrees device is pointing
 let lastFetch = null;
 
@@ -68,7 +69,7 @@ async function fetchWind(lat, lng) {
   try {
     const url = `https://api.open-meteo.com/v1/forecast` +
       `?latitude=${lat}&longitude=${lng}` +
-      `&current=wind_speed_10m,wind_direction_10m` +
+      `&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m` +
       `&wind_speed_unit=kmh`;
 
     const res  = await fetch(url);
@@ -76,6 +77,7 @@ async function fetchWind(lat, lng) {
 
     windFromDeg   = data.current.wind_direction_10m;
     windSpeedKmh  = Math.round(data.current.wind_speed_10m);
+    windGustKmh   = Math.round(data.current.wind_gusts_10m);
     lastFetch     = new Date();
 
     updateWindDisplay();
@@ -90,7 +92,7 @@ async function fetchWind(lat, lng) {
 function updateWindDisplay() {
   if (windSpeedKmh === null) return;
   windSpeedEl.textContent = `${windSpeedKmh} km/h`;
-  windDirEl.textContent   = `from ${toCardinal(windFromDeg)}`;
+  windDirEl.textContent   = `from ${toCardinal(windFromDeg)} · gusts ${windGustKmh} km/h`;
   updatedEl.textContent   = `Updated ${lastFetch.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 }
 
