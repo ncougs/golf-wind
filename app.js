@@ -68,7 +68,7 @@ async function fetchWind(lat, lng) {
     const url = `https://api.open-meteo.com/v1/forecast` +
       `?latitude=${lat}&longitude=${lng}` +
       `&current=wind_speed_10m,wind_direction_10m` +
-      `&wind_speed_unit=mph`;
+      `&wind_speed_unit=kmh`;
 
     const res  = await fetch(url);
     const data = await res.json();
@@ -88,7 +88,7 @@ async function fetchWind(lat, lng) {
 
 function updateWindDisplay() {
   if (windSpeedMph === null) return;
-  windSpeedEl.textContent = `${windSpeedMph} mph`;
+  windSpeedEl.textContent = `${windSpeedMph} km/h`;
   windDirEl.textContent   = `from ${toCardinal(windFromDeg)}`;
   updatedEl.textContent   = `Updated ${lastFetch.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 }
