@@ -1,5 +1,18 @@
-const CACHE = 'golf-wind-v1';
-const ASSETS = ['/', '/index.html', '/style.css', '/app.js', '/icon.svg'];
+const CACHE = 'golf-wind-v2';
+const ASSETS = [
+  '/',
+  '/index.html',
+  '/style.css',
+  '/app.js',
+  '/icon.svg',
+  '/js/state.js',
+  '/js/helpers.js',
+  '/js/effect.js',
+  '/js/compass.js',
+  '/js/api.js',
+  '/js/render.js',
+  '/js/modal.js',
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
