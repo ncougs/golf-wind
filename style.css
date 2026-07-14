@@ -567,11 +567,14 @@ footer {
 
 .forecast-row--now .fr-time { color: var(--green); }
 
-.fr-arrow {
-  width: 13px;
-  height: 18px;
+.fr-dir {
+  font-size: 0.78rem;
+  font-weight: 700;
   color: #aaa;
+  width: 26px;
+  text-align: center;
   flex-shrink: 0;
+  letter-spacing: 0.02em;
 }
 
 .fr-wind-col {

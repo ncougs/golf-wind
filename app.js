@@ -365,9 +365,7 @@ function openModal(type) {
       return `
         <div class="forecast-row${i === 0 ? ' forecast-row--now' : ''}">
           <span class="fr-time">${i === 0 ? 'Now' : h.label}</span>
-          <svg class="fr-arrow" style="transform:rotate(${h.windGoingDeg}deg)" viewBox="0 0 10 14" fill="none">
-            <path d="M5 0L9.5 7H6.5V14H3.5V7H0.5Z" fill="currentColor"/>
-          </svg>
+          <span class="fr-dir">${h.windDir}</span>
           <div class="fr-wind-col">
             <span class="fr-speed">${h.windSpeed} km/h</span>
             <span class="fr-gust">gusts ${h.windGust}</span>
@@ -457,7 +455,7 @@ function getNextHours(count) {
     return {
       label:       hourLabel(parseInt(hourlyForecast.time[j].slice(11, 13), 10)),
       windSpeed:   Math.round(hourlyForecast.wind_speed_10m[j]),
-      windGoingDeg: (hourlyForecast.wind_direction_10m[j] + 180) % 360,
+      windDir: toCardinal(hourlyForecast.wind_direction_10m[j]),
       windGust:    Math.round(hourlyForecast.wind_gusts_10m[j]),
       temp:        Math.round(hourlyForecast.temperature_2m[j]),
       precipProb:  hourlyForecast.precipitation_probability[j],
