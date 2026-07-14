@@ -4,6 +4,12 @@ let windSpeedKmh = null;
 let windGustKmh = null;
 let deviceHeading = null; // compass degrees device is pointing
 let lastFetch = null;
+let hourlyForecast = null;
+let currentTemp = null;
+
+const _p = new URLSearchParams(location.search);
+const DEV_LAT = parseFloat(_p.get('lat')) || null;
+const DEV_LNG = parseFloat(_p.get('lng')) || null;
 
 // Smooth compass readings with a circular mean over last N samples
 const headingBuffer = [];
@@ -45,6 +51,9 @@ function init() {
   getLocationAndWind();
   setInterval(getLocationAndWind, 5 * 60 * 1000);
   refreshBtn.addEventListener('click', getLocationAndWind);
+
+  // Forecast button
+  document.getElementById('forecast-btn').addEventListener('click', () => openModal('forecast'));
 
   // Modal triggers
   document.querySelectorAll('.card').forEach(card => {
@@ -118,6 +127,11 @@ function getLocationAndWind() {
   refreshBtn.disabled = true;
   refreshBtn.textContent = 'Refreshing…';
 
+  if (DEV_LAT && DEV_LNG) {
+    fetchWind(DEV_LAT, DEV_LNG);
+    return;
+  }
+
   if (!navigator.geolocation) {
     statusEl.textContent = 'Geolocation not supported';
     resetRefreshBtn();
@@ -143,8 +157,9 @@ async function fetchWind(lat, lng) {
   try {
     const url = `https://api.open-meteo.com/v1/forecast` +
       `?latitude=${lat}&longitude=${lng}` +
-      `&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m` +
-      `&wind_speed_unit=kmh`;
+      `&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m` +
+      `&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability` +
+      `&wind_speed_unit=kmh&forecast_hours=8&timezone=auto`;
 
     const res  = await fetch(url);
     const data = await res.json();
@@ -153,6 +168,8 @@ async function fetchWind(lat, lng) {
     windGoingDeg  = (windFromDeg + 180) % 360;
     windSpeedKmh  = Math.round(data.current.wind_speed_10m);
     windGustKmh   = Math.round(data.current.wind_gusts_10m);
+    currentTemp   = Math.round(data.current.temperature_2m);
+    hourlyForecast = data.hourly;
     lastFetch     = new Date();
 
     updateWindDisplay();
@@ -269,7 +286,8 @@ function updateEffect() {
 
 // ── Modal ───────────────────────────────────────────────────────────────
 function openModal(type) {
-  if (effectPct === null) {
+  // Forecast modal doesn't need effect data
+  if (type !== 'forecast' && effectPct === null) {
     statusEl.textContent = 'Wind data still loading…';
     return;
   }
@@ -329,6 +347,70 @@ function openModal(type) {
     });
   }
 
+  if (type === 'forecast') {
+    modalTitle.textContent = 'Forecast';
+
+    if (!hourlyForecast) {
+      modalBody.innerHTML = `<p class="modal-placeholder">Fetching forecast…</p>`;
+      modalOverlay.classList.add('open');
+      return;
+    }
+
+    const hours = getNextHours(6);
+    const precip = precipSummary(hours);
+
+    const hoursHTML = hours.map((h, i) => {
+      const precipColor = h.precipProb >= 50 ? '#60a5fa' : h.precipProb >= 20 ? '#f59e0b' : 'var(--text-muted)';
+      const precipLabel = h.precipProb < 20 ? 'Dry' : `${h.precipProb}% rain`;
+      return `
+        <div class="forecast-row${i === 0 ? ' forecast-row--now' : ''}">
+          <span class="fr-time">${i === 0 ? 'Now' : h.label}</span>
+          <svg class="fr-arrow" style="transform:rotate(${h.windGoingDeg}deg)" viewBox="0 0 10 14" fill="none">
+            <path d="M5 0L9.5 7H6.5V14H3.5V7H0.5Z" fill="currentColor"/>
+          </svg>
+          <div class="fr-wind-col">
+            <span class="fr-speed">${h.windSpeed} km/h</span>
+            <span class="fr-gust">gusts ${h.windGust}</span>
+          </div>
+          <span class="fr-temp">${h.temp}°</span>
+          <span class="fr-rain" style="color:${precipColor}">${precipLabel}</span>
+        </div>`;
+    }).join('');
+
+    let tempHTML = '';
+    if (currentTemp !== null) {
+      const adjPct = tempAdjPct(currentTemp);
+      const color  = adjPct > 0 ? '#34d399' : adjPct < 0 ? '#60a5fa' : 'var(--text-muted)';
+      const sign   = adjPct > 0 ? '+' : '';
+      const note   = adjPct === 0
+        ? 'No significant distance effect'
+        : `150m plays as ${Math.round(150 * (1 + adjPct / 100))}m in current air`;
+      tempHTML = `
+        <div class="forecast-temp-row">
+          <span class="forecast-temp-val">${currentTemp}°C</span>
+          <div class="forecast-temp-info">
+            <span class="forecast-temp-adj" style="color:${color}">${sign}${adjPct}% carry distance</span>
+            <span class="forecast-temp-note">${note}</span>
+          </div>
+        </div>`;
+    }
+
+    const precipHTML = precip ? `
+      <div class="forecast-precip-row">
+        <span class="forecast-precip-dot" style="background:${precip.color}"></span>
+        <span class="forecast-precip-text">${precip.text}</span>
+      </div>` : '';
+
+    modalBody.innerHTML = `
+      <p class="modal-section-label">NEXT 6 HOURS</p>
+      <div class="forecast-hours">${hoursHTML}</div>
+      <p class="modal-section-label">TEMPERATURE</p>
+      ${tempHTML || '<p class="modal-placeholder">Loading…</p>'}
+      <p class="modal-section-label">RAIN OUTLOOK</p>
+      ${precipHTML || '<p class="modal-placeholder">Loading…</p>'}
+    `;
+  }
+
   modalOverlay.classList.add('open');
 }
 
@@ -355,4 +437,52 @@ function updateToggleUI() {
 function toCardinal(deg) {
   const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
   return dirs[Math.round(deg / 45) % 8];
+}
+
+// ── Forecast helpers ────────────────────────────────────────────────────
+function getNextHours(count) {
+  if (!hourlyForecast) return [];
+  const now = new Date();
+  const nowDay  = now.getDate();
+  const nowHour = now.getHours();
+  const idx = hourlyForecast.time.findIndex(t => {
+    const day  = parseInt(t.slice(8, 10), 10);
+    const hour = parseInt(t.slice(11, 13), 10);
+    return day > nowDay || (day === nowDay && hour >= nowHour);
+  });
+  if (idx === -1) return [];
+  return Array.from({ length: count }, (_, i) => {
+    const j = idx + i;
+    if (j >= hourlyForecast.time.length) return null;
+    return {
+      label:       hourLabel(parseInt(hourlyForecast.time[j].slice(11, 13), 10)),
+      windSpeed:   Math.round(hourlyForecast.wind_speed_10m[j]),
+      windGoingDeg: (hourlyForecast.wind_direction_10m[j] + 180) % 360,
+      windGust:    Math.round(hourlyForecast.wind_gusts_10m[j]),
+      temp:        Math.round(hourlyForecast.temperature_2m[j]),
+      precipProb:  hourlyForecast.precipitation_probability[j],
+    };
+  }).filter(Boolean);
+}
+
+function hourLabel(h) {
+  if (h === 0)  return '12 AM';
+  if (h < 12)   return `${h} AM`;
+  if (h === 12) return '12 PM';
+  return `${h - 12} PM`;
+}
+
+function tempAdjPct(temp) {
+  // ~1% per 5.5°C from 20°C baseline (air density effect on carry distance)
+  return Math.round((temp - 20) / 5.5);
+}
+
+function precipSummary(hours) {
+  if (!hours.length) return null;
+  const maxProb    = Math.max(...hours.map(h => h.precipProb));
+  const firstWetIdx = hours.findIndex(h => h.precipProb >= 50);
+  if (maxProb < 20)       return { text: 'Dry conditions expected',                              color: '#22c55e' };
+  if (firstWetIdx === 0)  return { text: `${hours[0].precipProb}% chance of rain now`,           color: '#60a5fa' };
+  if (firstWetIdx > 0)    return { text: `Dry now · rain likely from ${hours[firstWetIdx].label}`, color: '#f59e0b' };
+  return                         { text: `Low chance of rain (up to ${maxProb}%)`,               color: '#f59e0b' };
 }

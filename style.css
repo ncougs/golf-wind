@@ -48,7 +48,36 @@ header {
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+}
+
+/* ── Forecast button ── */
+#forecast-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: transparent;
+  border: 1px solid var(--border-dim);
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem 0.3rem 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#forecast-btn:active {
+  color: #fff;
+  border-color: var(--border);
+}
+
+#forecast-btn svg {
+  width: 14px;
+  height: 11px;
+  flex-shrink: 0;
 }
 
 #updated {
@@ -487,4 +516,155 @@ footer {
   font-size: 0.72rem;
   color: var(--text-muted);
   margin-top: 0.4rem;
+}
+
+/* ── Modal placeholder ── */
+.modal-placeholder {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 1rem 0;
+  margin-bottom: 1.75rem;
+}
+
+/* ── Modal section labels ── */
+.modal-section-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+/* ── Forecast hourly rows ── */
+.forecast-hours {
+  background: #1a1a1d;
+  border: 1px solid var(--border-dim);
+  border-radius: 14px;
+  padding: 0 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.forecast-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.forecast-row:last-child { border-bottom: none; }
+
+.fr-time {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  width: 46px;
+  flex-shrink: 0;
+}
+
+.forecast-row--now .fr-time { color: var(--green); }
+
+.fr-arrow {
+  width: 13px;
+  height: 18px;
+  color: #aaa;
+  flex-shrink: 0;
+}
+
+.fr-wind-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.fr-speed {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.fr-gust {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.fr-temp {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #bbb;
+  width: 30px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.fr-rain {
+  font-size: 0.78rem;
+  font-weight: 600;
+  width: 58px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Forecast temperature section ── */
+.forecast-temp-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #1a1a1d;
+  border: 1px solid var(--border-dim);
+  border-radius: 14px;
+  padding: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.forecast-temp-val {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.03em;
+  flex-shrink: 0;
+}
+
+.forecast-temp-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.forecast-temp-adj {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.forecast-temp-note {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* ── Forecast rain section ── */
+.forecast-precip-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #1a1a1d;
+  border: 1px solid var(--border-dim);
+  border-radius: 14px;
+  padding: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.forecast-precip-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.forecast-precip-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ccc;
 }
